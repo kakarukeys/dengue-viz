@@ -1,0 +1,12 @@
+{
+    "snapshots": [
+        {
+            "date": "2014-08-07",
+            "cases": [
+                {"coords": [1.3783669, 103.7427482], "name": "Choa Chu Kang Avenue 2", "total": 1},
+                {"coords": [1.380769, 103.743296], "name": "Choa Chu Kang Avenue 3", "total": 4},
+                {"coords": [1.3757617, 103.7388229], "name": "Choa Chu Kang Avenue 5", "total": 187}
+            ]
+        }
+    ]
+}
