@@ -9,21 +9,25 @@ function create_map() {
     return map;
 }
 
-function add_clusters(map, markers) {
-    var clusters = L.markerClusterGroup();
-    clusters.addLayers(markers);
-    map.addLayer(clusters);    
-}
-
 function create_marker(d) {
     return L.marker(d.coords, {title: d.name});
 }
 
-var map = create_map();
+function process_data(cluster_data) {
+    var cases = cluster_data.snapshots[0].cases;
+    return _.map(cases, create_marker);
+}
 
-$.getJSON("cluster_data.json", function(data) {
-    var cases = data.snapshots[0].cases,
-        markers = _.map(cases, create_marker);
+function create_clusters(markers) {
+    return L.markerClusterGroup().addLayers(markers);
+}
 
-    add_clusters(map, markers);
-});
+var promise = $.getJSON("cluster_data.json")
+        .then(process_data)
+        .then(create_clusters),
+
+    map = create_map();
+
+promise.done(function(clusters) {
+    map.addLayer(clusters);
+});    
