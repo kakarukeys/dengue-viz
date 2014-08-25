@@ -22,15 +22,12 @@ function create_clusters(markers) {
     return L.markerClusterGroup().addLayers(markers);
 }
 function add_markers(){
-	$.getJSON("marker_data.json", function(data){
 	
-	for (var i = 0; i < data.length; i++) {
-			marker = new L.marker([data[i].coords[0],data[i].coords[1]])
-				.bindPopup("<b>"+data[i].name+"</b><br><b>Cases : </b>"+data[i].total )
-				.addTo(map)
-		}
- });
+	$.getJSON("marker_data.json", function(data){
+	_.each(data, function(d){marker = new L.marker([d.coords[0],d.coords[1]]).bindPopup("<b>"+d.name+"</b><br><b>Cases : </b>"+d.total ).addTo(map)} );
+	});
 }
+
 add_markers();
 var promise = $.getJSON("cluster_data.json")
         .then(process_data)
