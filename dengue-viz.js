@@ -1,5 +1,5 @@
 function create_map() {
-    var map = L.map('map').setView([1.347833, 103.809357], 11);
+    var map = L.map('map').setView([1.347833, 103.809357], 12);
 
     L.tileLayer('http://{s}.tiles.mapbox.com/v3/kakarukeys.iofn8meo/{z}/{x}/{y}.png', {
         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -24,6 +24,7 @@ function create_clusters(markers) {
 function add_markers(){
 	
 	$.getJSON("marker_data.json", function(data){
+	data  = data.snapshots[0].cases;
 	_.each(data, function(d){marker = new L.marker([d.coords[0],d.coords[1]]).bindPopup("<b>"+d.name+"</b><br><b>Cases : </b>"+d.total ).addTo(map)} );
 	});
 }
