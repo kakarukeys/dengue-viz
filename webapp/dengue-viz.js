@@ -13,30 +13,40 @@ function create_marker(d) {
     return L.marker(d.coords, {title: d.name});
 }
 
-function process_data(cluster_data) {
+function process_cluster_data(cluster_data) {
     var cases = cluster_data.snapshots[0].cases;
     return _.map(cases, create_marker);
 }
 
-function create_clusters(markers) {
+function process_marker_data(marker_data) {
+    var sites = marker_data.groups[0].sites;
+
+    return _.map(sites, function(d) {
+        return create_marker(d).bindPopup("<b>"+d.name+"</b>");
+    });
+}
+
+function create_cluster_layer(markers) {
     return L.markerClusterGroup().addLayers(markers);
 }
-function add_markers(){
-	
-	$.getJSON("marker_data.json", function(data){
-	data  = data.snapshots[0].cases;
-	_.each(data, function(d){marker = new L.marker([d.coords[0],d.coords[1]]).bindPopup("<b>"+d.name+"</b><br><b>Cases : </b>"+d.total ).addTo(map)} );
-	});
+
+function create_marker_layer(markers) {
+    return L.layerGroup(markers);
 }
 
-add_markers();
-var promise = $.getJSON("cluster_data.json")
-        .then(process_data)
-        .then(create_clusters),
+var cluster_layer = $.getJSON("cluster_data.json")
+        .then(process_cluster_data)
+        .then(create_cluster_layer),
 
+    marker_layer = $.getJSON("marker_data.json")
+        .then(process_marker_data)
+        .then(create_marker_layer),
 
     map = create_map();
-	
-promise.done(function(clusters) {
-    map.addLayer(clusters);
-});    
+
+function add_layer(layer) {
+    map.addLayer(layer);
+}
+
+cluster_layer.done(add_layer);
+marker_layer.done(add_layer);
