@@ -33,8 +33,8 @@ def find_coordinates(place):
       print coords[0]
       location = [ coords[0],coords[1] ]
       return location
-  except GeocoderError:
-    geolocator = Nominatim()
+  except:
+    geolocator = GoogleV3()
     location = geolocator.geocode(place)
     #print(location.latitude,location.longitude,location.address)
     location = [ location.latitude,location.longitude ]
@@ -53,8 +53,11 @@ def parse_script(input_html,output_json):
   #Reading a Page
   page = response.read()
 
+  re.sub(r'[^\x00-\x7F]+',' ', page)
+
   #Getting tree from page
   tree = html.fromstring(page)
+  
   #Getting Date by xpath
   date = tree.xpath("//table//table//p/b/u/span/text()")
   date = ' '.join(date[0].split())
@@ -71,10 +74,7 @@ def parse_script(input_html,output_json):
   date_object = date_object.date()
   print date_object
   date = date_object.strftime('%Y-%m-%d')
-
-  for bad in tree.xpath("//span[contains(@style,'mso-spacerun:yes')]"):
-      bad.getparent().remove(bad)
-
+  
   location = []
   #Getting Location
   for td in tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[1]/p[not(b)]'):
@@ -90,13 +90,20 @@ def parse_script(input_html,output_json):
       #cases = [{"name": l , "total": t} for l,t in zip(location,total)]
       cases = []
       for l,t  in zip(location,total):
+        check = True
+        for case in cases:
+            if case["name"] == l:
+              case["total"] += int(t)
+              check = False
+              break
+        if check:
           formatted_location = correct_format(l)
           c = find_coordinates(formatted_location)
-          cases.append({"name" : l,"total" : t,"coords" : [c[0] , c[1]] })
+          cases.append({"name" : l,"total" : int(t),"coords" : [c[0] , c[1]] })
   else:
       print "missing values"
   print len(cases)
-
+  
   #Formating the data
   output = {"snapshots" : [{"date":date,"cases":cases}]}
   print output
