@@ -8,6 +8,8 @@ from geopy.geocoders import GoogleV3
 from pygeocoder import Geocoder
 from pygeocoder import GeocoderError
 import re
+import sys, getopt
+import os
 
 def correct_format(text):
   match=re.findall(r'\((.+?)\)',text)
@@ -31,8 +33,8 @@ def find_coordinates(place):
       print coords[0]
       location = [ coords[0],coords[1] ]
       return location
-  except GeocoderError:
-    geolocator = Nominatim()
+  except:
+    geolocator = GoogleV3()
     location = geolocator.geocode(place)
     #print(location.latitude,location.longitude,location.address)
     location = [ location.latitude,location.longitude ]
@@ -43,64 +45,94 @@ def write_json(filename,data):
     json.dump(data,outfile)
 
   
+def parse_script(input_html,output_json):
+  #Opening a Connection with Page
+  #response = urllib2.urlopen("file:///C:/Users/Sameed/Desktop/html/data20140815.html")
+  response = urllib2.urlopen(input_html)
 
+  #Reading a Page
+  page = response.read()
+
+  re.sub(r'[^\x00-\x7F]+',' ', page)
+
+  #Getting tree from page
+  tree = html.fromstring(page)
   
-#Opening a Connection with Page
-response = urllib2.urlopen("file:///C:/Users/Sameed/Desktop/html/data20140815.html")
+  #Getting Date by xpath
+  date = tree.xpath("//table//table//p/b/u/span/text()")
+  date = ' '.join(date[0].split())
 
-#Reading a Page
-page = response.read()
+  #Removing Unwanted characters
+  date = date[date.index("at")+3:]
+  print date
 
-#Getting tree from page
-tree = html.fromstring(page)
-#Getting Date by xpath
-date = tree.xpath("//table//table//p/b/u/span/text()")
-date = ' '.join(date[0].split())
+  #Converting from string to datetime object
+  date_object = datetime.strptime(date,"%d %B %Y")
+  print date_object
 
-#Removing Unwanted characters
-date = date[date.index("at")+3:]
-print date
+  #Getting only date
+  date_object = date_object.date()
+  print date_object
+  date = date_object.strftime('%Y-%m-%d')
+  
+  location = []
+  #Getting Location
+  for td in tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[1]/p[not(b)]'):
+      location.append(' '.join(td.text_content().split()))
 
-#Converting from string to datetime object
-date_object = datetime.strptime(date,"%d %B %Y")
-print date_object
+  print len(location)
 
-#Getting only date
-date_object = date_object.date()
-print date_object
-date = date_object.strftime('%Y-%m-%d')
+  #Geting cases
+  total = tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[2]/p/span/text()')
+  print len(total)
 
-for bad in tree.xpath("//span[contains(@style,'mso-spacerun:yes')]"):
-    bad.getparent().remove(bad)
+  if len(total) == len(location):
+      #cases = [{"name": l , "total": t} for l,t in zip(location,total)]
+      cases = []
+      for l,t  in zip(location,total):
+        check = True
+        for case in cases:
+            if case["name"] == l:
+              case["total"] += int(t)
+              check = False
+              break
+        if check:
+          formatted_location = correct_format(l)
+          c = find_coordinates(formatted_location)
+          cases.append({"name" : l,"total" : int(t),"coords" : [c[0] , c[1]] })
+  else:
+      print "missing values"
+  print len(cases)
+  
+  #Formating the data
+  output = {"snapshots" : [{"date":date,"cases":cases}]}
+  print output
 
-location = []
-#Getting Location
-for td in tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[1]/p[not(b)]'):
-    location.append(' '.join(td.text_content().split()))
+  #write_json("marker_data.json",output)
+  write_json(output_json,output)
 
-print len(location)
 
-#Geting cases
-total = tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[2]/p/span/text()')
-print len(total)
-
-if len(total) == len(location):
-    #cases = [{"name": l , "total": t} for l,t in zip(location,total)]
-    cases = []
-    for l,t  in zip(location,total):
-        formatted_location = correct_format(l)
-        c = find_coordinates(formatted_location)
-        cases.append({"name" : l,"total" : t,"coords" : [c[0] , c[1]] })
-else:
-    print "missing values"
-print len(cases)
-
-#Formating the data
-output = {"snapshots" : [{"date":date,"cases":cases}]}
-print output
-
-write_json("marker_data.json",output)
-
+ 
+#Parameterizing the script
+ifile=''
+ofile=''
+ 
+try:
+    myopts, args = getopt.getopt(sys.argv[1:],"i:o:")
+except getopt.GetoptError as e:
+    print (str(e))
+    print("Usage: %s -i input -o output" % sys.argv[0])
+    sys.exit(2)
+ 
+for o, a in myopts:
+    if o == '-i':
+        ifile=a
+    elif o == '-o':
+        ofile=a
+ 
+# Display input and output file name passed as the args
+print ("Input file : %s and output file: %s" % (ifile,ofile) )
+parse_script(ifile,ofile)
 
 
 
