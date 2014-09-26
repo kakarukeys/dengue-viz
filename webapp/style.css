@@ -1,0 +1,143 @@
+	/* ---------------------------------------------------------------------------------------------------------- 
+	01 Sensible defaults ----------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------- */
+	
+	*								{ -moz-box-sizing:border-box; -webkit-box-sizing:border-box; box-sizing:border-box; } /* Apply a natural box layout model to all elements â€” see http://paulirish.com/2012/box-sizing-border-box-ftw */
+	::-moz-selection 				{ background:#333; color:#fff; }
+	::selection 					{ background:#333; color:#fff; }
+
+	/* ---------------------------------------------------------------------------------------------------------- 
+	02 Typography -----------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------- */
+	/*
+
+	14 / 16	= 		0.875em 		(14px equivalent)
+	16 / 16	= 		1em 			(16px equivalent)
+	18 / 16 = 		1.125em 		(18px equivalent)
+	21 / 16 = 		1.3125em 		(21px equivalent)
+	24 / 16 = 		1.5em 			(24px equivalent)
+	30 / 16 = 		1.875em 		(30px equivalent)
+	36 / 16 = 		2.25em 			(36px equivalent)
+	48 / 16 = 		3em 			(48px equivalent)
+	60 / 16 = 		3.75em 			(60px equivalent)
+	72 / 16 = 		4.5em 			(72px equivalent)
+	96 / 16 = 		6em 			(96px equivalent)
+
+	*/
+
+	/* Rendering */
+	body,
+	input,
+	textarea 						{ color:#333; /*-webkit-font-smoothing:antialiased;*/ } 
+
+	/* Families */
+	body							{ font-family: Century Gothic, sans-serif; }
+	h2								{ font-family: ‘Lucida Sans Unicode’, ‘Lucida Grande’, sans-serif; }
+
+	/* Headings */
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 								{ font-weight:normal; }
+	h1 								{ background:#ea2e49; color:#fff; display:inline-block; margin-bottom:1em; padding:0.5em 1em; }
+	h2 								{ color:#fff; font-weight:900; /* Heavy */ font-size:2.5em; letter-spacing:1px; line-height:1em; }
+
+	/* Links */
+	a 								{ border-bottom:1px solid rgba(0,0,0,0.2); color:#333; text-decoration:none; -moz-transition:border-color 0.2s ease-in-out; -ms-transition:border-color 0.2s ease-in-out; -o-transition:border-color 0.2s ease-in-out; -webkit-transition:border-color 0.2s ease-in-out; transition:border-color 0.2s ease-in-out; }
+	a:hover 						{ border-color:#ea2e49; }
+
+	/* Paragraph styles */
+	p,
+	li 								{ font-size:1em; font-weight:400; /* Regular */ line-height:1.5em; padding:0.5em 0; }
+	h1								{ font-weight:300; letter-spacing:2px; text-transform:uppercase; }
+
+	/* Other bits & bobs */
+	em,
+	strong 							{ font-style:normal; font-weight:500; }
+
+	/* ---------------------------------------------------------------------------------------------------------- 
+	03 Layout ---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------- */
+
+	html 							{ background:#daede2; padding: 1% 5%; }
+	body 							{ background:#77c4d3; }
+
+	section 						{ padding:3%; }
+	section div.preamble 			{ background:rgba(255,255,255,0.9); color:#333; margin-left:-30%; padding:5% 5% 5% 30%; }
+
+	/* ---------------------------------------------------------------------------------------------------------- 
+	04 Media queries (using a mobile-first approach) ------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------- */
+
+	/* 1 and up */	
+	@media screen and (min-width:1px) {
+
+		body 						{ font-size:85%; }
+
+	}
+
+
+	/* 550 and up */	
+	@media screen and (min-width:550px) {
+
+		h2 							{ font-size:3em; }
+		section 					{ width:66.6%; }
+	}
+
+	/* 650 and up */	
+	@media screen and (min-width:650px) {
+
+
+	}
+
+	/* 700 and up */	
+	@media screen and (min-width:700px) {
+
+		body 						{ font-size:90%; }
+
+	}
+
+	/* 800 and up */	
+	@media screen and (min-width:800px) {
+
+		body 						{ font-size:100%; }
+
+	}
+
+	/* 900 and up */	
+	@media screen and (min-width:900px) {
+
+		body 						{ font-size:110%; }
+
+	}
+
+	/* 1500 and up */	
+	@media screen and (min-width:1500px) {
+
+		body 						{ font-size:125%; }
+
+	}
+
+	/* 1800 and up */	
+	@media screen and (min-width:1800px) {
+
+		body 						{ font-size:150%; }
+
+	}
+
+	/* 2100 and up */	
+	@media screen and (min-width:2100px) {
+
+		body 						{ font-size:175%; }
+
+	}
+
+
+	/* 2500 and up */	
+	@media screen and (min-width:2500px) {
+
+		body 						{ font-size:200%; }
+
+	}
