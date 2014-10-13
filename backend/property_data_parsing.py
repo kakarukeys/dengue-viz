@@ -12,8 +12,10 @@ def write_json(data,filename):
     json.dump(data,outfile)
     
 def data_parsing(input_html,output_json):
-    r = urllib2.urlopen(input_html)
-    data = r.read()
+    with open (input_html, "r") as myfile:
+      data = myfile.read()
+    #r = urllib2.urlopen(input_html)
+    #data = r.read()
     soup = BeautifulSoup(data,'html5lib')
     n = soup.findAll('table')[7].findAll('table')
     output = []

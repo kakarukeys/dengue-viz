@@ -48,10 +48,12 @@ def write_json(filename,data):
 def parse_script(input_html,output_json):
   #Opening a Connection with Page
   #response = urllib2.urlopen("file:///C:/Users/Sameed/Desktop/html/data20140815.html")
-  response = urllib2.urlopen(input_html)
-
+  #response = urllib2.urlopen(input_html)
+  
   #Reading a Page
-  page = response.read()
+  with open (input_html, "r") as myfile:
+    page = myfile.read()
+  #page = response.read()
 
   re.sub(r'[^\x00-\x7F]+',' ', page)
 
