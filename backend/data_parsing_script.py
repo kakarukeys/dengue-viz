@@ -1,15 +1,32 @@
-from lxml import etree
-import urllib2
-from lxml import html
-from datetime import datetime
+from bs4 import BeautifulSoup
 import json
+import html5lib
+import re
+from datetime import datetime
 from geopy.geocoders import Nominatim
 from geopy.geocoders import GoogleV3
 from pygeocoder import Geocoder
 from pygeocoder import GeocoderError
-import re
 import sys, getopt
 import os
+import shelve
+
+def parameterize_script():
+  ifile=''
+  ofile=''
+  try:
+    myopts, args = getopt.getopt(sys.argv[1:],"i:o:")
+  except getopt.GetoptError as e:
+    print (str(e))
+    print("Usage: %s -i input -o output" % sys.argv[0])
+    sys.exit(2)
+  for o, a in myopts:
+    if o == '-i':
+        ifile=a
+    elif o == '-o':
+        ofile=a
+
+  return (ifile,ofile)
 
 def correct_format(text):
   match=re.findall(r'\((.+?)\)',text)
@@ -24,119 +41,108 @@ def correct_format(text):
   else:
     return text + ",Singapore"
 
-def find_coordinates(place):
-  #print place
+def coords_google_api(place):
   try:
     geo = Geocoder.geocode(place)
     coords = geo[0].coordinates
     if coords[0]:
-      print coords[0]
+      print (coords[0])
       location = [ coords[0],coords[1] ]
       return location
   except:
-    geolocator = GoogleV3()
+    print("Geopy")
+    location = [0.0,0.0]
+    return location
+    
+def coords_nominatim_api(place):
+  try:
+    geolocator = Nominatim()
     location = geolocator.geocode(place)
-    #print(location.latitude,location.longitude,location.address)
     location = [ location.latitude,location.longitude ]
     return location
+  except:
+    print("Nominatim")
+    location = [0.0,0.0]
+    return location
+
+def find_coordinates(place):
+  coords = coords_google_api(place)
+  if coords == [0.0,0.0]:
+    coords = coords_nominatim_api(place)
+  return coords
+    
+   
+    
+def find_coordinates_memoized(place):
+  if place not in memory:
+        l = correct_format(place)
+        location = find_coordinates(l)
+        memory[place] = location
+       
+
+  return memory[place]
+
+def get_date(soup):
+    date = soup(text=re.compile(r'As at'))[0]
+    date = date[date.index("at")+3:]
+    date_object = datetime.strptime(date,"%d %B %Y")
+    date = date_object.strftime('%Y-%m-%d')
+    return date
+
+def get_table(soup):
+  tables = soup.findAll("table", { "class" : "MsoNormalTable" })
+  ind = 0
+  for i in range(0,3):
+    try:
+      ans = tables[i].findAll('tr')[0].findAll('p')[4].b.text
+      if ans == 'Breakdown':
+        ind = i + 1
+    except:
+      pass
+  tables = soup.findAll("table", { "class" : "MsoNormalTable" })[ind:]
+  return tables
+  
+def get_location_and_cases(tables):
+    total = []
+    for table in tables:
+        t = table.findAll('tr')[1:]
+        for tr in t:
+            output = {'name': ' '.join(tr.findAll('td')[0].text.split()),
+                      'total': ' '.join(tr.findAll('td')[1].text.split()),
+                      'coords':  find_coordinates_memoized(' '.join(tr.findAll('td')[0].text.split()))}
+            total.append(output)
+            print(output) 
+    return total
+
+def read_file(file):
+  try:
+    with open (file, "r") as myfile:
+      data = myfile.read()
+      return data
+  except IOError:
+      print("File Doesn't Exist")
+      
+  
 
 def write_json(filename,data):
   with open(filename,"w") as outfile:
-    json.dump(data,outfile)
+    json.dump(data,outfile) 
 
-  
-def parse_script(input_html,output_json):
-  #Opening a Connection with Page
-  #response = urllib2.urlopen("file:///C:/Users/Sameed/Desktop/html/data20140815.html")
-  #response = urllib2.urlopen(input_html)
-  
-  #Reading a Page
-  with open (input_html, "r") as myfile:
-    page = myfile.read()
-  #page = response.read()
-
-  re.sub(r'[^\x00-\x7F]+',' ', page)
-
-  #Getting tree from page
-  tree = html.fromstring(page)
-  
-  #Getting Date by xpath
-  date = tree.xpath("//table//table//p/b/u/span/text()")
-  date = ' '.join(date[0].split())
-
-  #Removing Unwanted characters
-  date = date[date.index("at")+3:]
-  print date
-
-  #Converting from string to datetime object
-  date_object = datetime.strptime(date,"%d %B %Y")
-  print date_object
-
-  #Getting only date
-  date_object = date_object.date()
-  print date_object
-  date = date_object.strftime('%Y-%m-%d')
-  
-  location = []
-  #Getting Location
-  for td in tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[1]/p[not(b)]'):
-      location.append(' '.join(td.text_content().split()))
-
-  print len(location)
-
-  #Geting cases
-  total = tree.xpath('//table[@class="MsoNormalTable"]//table[@class="MsoNormalTable"]//tr/td[2]/p/span/text()')
-  print len(total)
-
-  if len(total) == len(location):
-      #cases = [{"name": l , "total": t} for l,t in zip(location,total)]
-      cases = []
-      for l,t  in zip(location,total):
-        check = True
-        for case in cases:
-            if case["name"] == l:
-              case["total"] += int(t)
-              check = False
-              break
-        if check:
-          formatted_location = correct_format(l)
-          c = find_coordinates(formatted_location)
-          cases.append({"name" : l,"total" : int(t),"coords" : [c[0] , c[1]] })
-  else:
-      print "missing values"
-  print len(cases)
-  
-  #Formating the data
-  output = {"snapshots" : [{"date":date,"cases":cases}]}
-  print output
-
-  #write_json("marker_data.json",output)
-  write_json(output_json,output)
+def parsing_script(input_html,output_json):
+    data = read_file(input_html)
+    soup = BeautifulSoup(data,'html5lib')
+    date = get_date(soup)
+    tables = get_table(soup)
+    cases = get_location_and_cases(tables)
+    output = {"snapshots" : [{"date":date,"cases":cases}]}
+    write_json(output_json,output)      
 
 
- 
-#Parameterizing the script
-ifile=''
-ofile=''
- 
-try:
-    myopts, args = getopt.getopt(sys.argv[1:],"i:o:")
-except getopt.GetoptError as e:
-    print (str(e))
-    print("Usage: %s -i input -o output" % sys.argv[0])
-    sys.exit(2)
- 
-for o, a in myopts:
-    if o == '-i':
-        ifile=a
-    elif o == '-o':
-        ofile=a
- 
-# Display input and output file name passed as the args
-print ("Input file : %s and output file: %s" % (ifile,ofile) )
-parse_script(ifile,ofile)
+memory = shelve.open("memory_coords")
 
-
-
- 
+if __name__ == '__main__':
+  (i,o) = parameterize_script()
+  parsing_script(i,o)
+  memory.close()
+#parsing_script("C:/Users/Sameed/Desktop/new.htm","datanew.json")
 
