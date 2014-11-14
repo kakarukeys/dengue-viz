@@ -1,11 +1,9 @@
 from bs4 import BeautifulSoup
-import urllib2
 import json
 import html5lib
 import sys, getopt
 import os
-
-
+from data_parsing_script import find_coordinates
 
 def write_json(data,filename):
   with open(filename,"w") as outfile:
@@ -14,19 +12,23 @@ def write_json(data,filename):
 def data_parsing(input_html,output_json):
     with open (input_html, "r") as myfile:
       data = myfile.read()
-    #r = urllib2.urlopen(input_html)
-    #data = r.read()
     soup = BeautifulSoup(data,'html5lib')
     n = soup.findAll('table')[7].findAll('table')
     output = []
+    
     for tr in n:
-        project_name = tr.findAll('td')[1].text.strip()
-        property_type = tr.findAll('td')[3].text.strip()
-        top = tr.findAll('td')[5].text.strip()
-        road = tr.findAll('td')[9].text.strip()
-        result = {"project_name": project_name,"property_type" :property_type,"top":top,"road":road}
+        project_name = tr.findAll('td')[1].text.strip().title()
+        property_type = tr.findAll('td')[3].text.strip().title()
+        name = project_name + ' - ' + property_type
+        top = tr.findAll('td')[5].text.split()
+        road = tr.findAll('td')[9].text.strip().title()
+        coords = find_coordinates(road +',Singapore')
+        result = {"name":name,
+                  "top":top[0],
+                  "address":road,
+                  "coords":coords}
         output.append(result)
-    write_json(output,output_json)
+    write_json({'sites':output},output_json)
     
 
 def parameterize_script():
@@ -51,6 +53,7 @@ def parameterize_script():
 
 #Calling the functions
 (i,o) = parameterize_script()
+
 try:
   data_parsing(i,o)
 except:
