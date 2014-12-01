@@ -1,15 +1,20 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+import os, sys
 from bs4 import BeautifulSoup
 import json
 import html5lib
 import sys, getopt
-import os
+import glob
+
 from data_parsing_script import find_coordinates
 
 def write_json(data,filename):
-  with open(filename,"w") as outfile:
+  with open(filename,"a") as outfile:
     json.dump(data,outfile)
     
 def data_parsing(input_html,output_json):
+    
     with open (input_html, "r") as myfile:
       data = myfile.read()
     soup = BeautifulSoup(data,'html5lib')
@@ -28,7 +33,7 @@ def data_parsing(input_html,output_json):
                   "address":road,
                   "coords":coords}
         output.append(result)
-    write_json({'sites':output},output_json)
+    write_json({"groups":[{"name": "construction sites","sites":output}]},output_json)
     
 
 def parameterize_script():
@@ -47,15 +52,17 @@ def parameterize_script():
         ifile=a
     elif o == '-o':
         ofile=a
-
+  
   return (ifile,ofile)
 
 
 #Calling the functions
 (i,o) = parameterize_script()
-
+open(o,"w").close()
 try:
-  data_parsing(i,o)
+  for file in glob.glob(i):
+    print(file)
+    data_parsing(file,o)
 except:
   print("Usage: %s -i input -o output" % sys.argv[0])
 
