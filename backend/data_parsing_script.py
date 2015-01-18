@@ -55,7 +55,7 @@ def coords_google_api(place):
     print("Geopy")
     location = [0.0,0.0]
     return location
-    
+
 def coords_nominatim_api(place):
   try:
     geolocator = Nominatim()
@@ -72,15 +72,15 @@ def find_coordinates(place):
   if coords == [0.0,0.0]:
     coords = coords_nominatim_api(place)
   return coords
-    
-   
-    
+
+
+
 def find_coordinates_memoized(place):
   if place not in memory:
         l = correct_format(place)
         location = find_coordinates(l)
         memory[place] = location
-       
+
 
   return memory[place]
 
@@ -103,7 +103,7 @@ def get_table(soup):
       pass
   tables = soup.findAll("table", { "class" : "MsoNormalTable" })[ind:]
   return tables
-  
+
 def get_location_and_cases(tables):
     total = []
     for table in tables:
@@ -113,22 +113,22 @@ def get_location_and_cases(tables):
                       'total': ' '.join(tr.findAll('td')[1].text.split()),
                       'coords':  find_coordinates_memoized(' '.join(tr.findAll('td')[0].text.split()))}
             total.append(output)
-            print(output) 
+            print(output)
     return total
 
 def read_file(file):
   try:
-    with open (file, "r") as myfile:
+    with open (file, "r", errors="replace") as myfile:
       data = myfile.read()
       return data
   except IOError:
       print("File Doesn't Exist")
-      
-  
+
+
 
 def write_json(filename,data):
   with open(filename,"w") as outfile:
-    json.dump(data,outfile) 
+    json.dump(data,outfile)
 
 def parsing_script(input_html,output_json):
     data = read_file(input_html)
@@ -137,7 +137,7 @@ def parsing_script(input_html,output_json):
     tables = get_table(soup)
     cases = get_location_and_cases(tables)
     output = {"snapshots" : [{"date":date,"cases":cases}]}
-    write_json(output_json,output)      
+    write_json(output_json,output)
 
 
 memory = shelve.open("memory_coords")
