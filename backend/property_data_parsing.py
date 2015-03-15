@@ -1,69 +1,48 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os, sys
-from bs4 import BeautifulSoup
-import json
-import html5lib
-import sys, getopt
+
+import argparse
 import glob
+import json
 
-from data_parsing_script import find_coordinates
+from bs4 import BeautifulSoup
 
-def write_json(data,filename):
-  with open(filename,"a") as outfile:
-    json.dump(data,outfile)
-    
-def data_parsing(input_html,output_json):
-    
-    with open (input_html, "r") as myfile:
+from data_parsing_script import find_coordinates_memoized
+
+
+def data_parsing(input_html):
+    with open (input_html, "r", errors="replace") as myfile:
       data = myfile.read()
     soup = BeautifulSoup(data,'html5lib')
     n = soup.findAll('table')[7].findAll('table')
     output = []
-    
+
     for tr in n:
         project_name = tr.findAll('td')[1].text.strip().title()
         property_type = tr.findAll('td')[3].text.strip().title()
         name = project_name + ' - ' + property_type
         top = tr.findAll('td')[5].text.split()
         road = tr.findAll('td')[9].text.strip().title()
-        coords = find_coordinates(road +',Singapore')
+        coords = find_coordinates_memoized(road +',Singapore')
         result = {"name":name,
                   "top":top[0],
                   "address":road,
                   "coords":coords}
         output.append(result)
-    write_json({"groups":[{"name": "construction sites","sites":output}]},output_json)
-    
+    return output
 
-def parameterize_script():
-  ifile=''
-  ofile=''
+def process_html_files(all_files):
+    sites = [site for input_html in all_files for site in data_parsing(input_html)]
+    return {"groups": [{
+        "name": "construction sites",
+        "sites": sites
+    }]}
 
-  try:
-    myopts, args = getopt.getopt(sys.argv[1:],"i:o:")
-  except getopt.GetoptError as e:
-    print (str(e))
-    print("Usage: %s -i input -o output" % sys.argv[0])
-    sys.exit(2)
- 
-  for o, a in myopts:
-    if o == '-i':
-        ifile=a
-    elif o == '-o':
-        ofile=a
-  
-  return (ifile,ofile)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process property data.')
+    parser.add_argument("-i", metavar="input htm", help="Input files")
+    parser.add_argument("-o", metavar="output json", type=argparse.FileType('w'), help="Output file")
 
-
-#Calling the functions
-(i,o) = parameterize_script()
-open(o,"w").close()
-try:
-  for file in glob.glob(i):
-    print(file)
-    data_parsing(file,o)
-except:
-  print("Usage: %s -i input -o output" % sys.argv[0])
-
-
+    args = parser.parse_args()
+    results = process_html_files(glob.glob(args.i))
+    json.dump(results, args.o)
